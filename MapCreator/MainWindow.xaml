@@ -4,11 +4,33 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MapCreator"
-        mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" Loaded="Window_Loaded">
-    <Grid>
+        mc:Ignorable="d" Name="Bigwindow"
+        Title="MainWindow" Height="900" Width="800" Loaded="Window_Loaded">
+    <Grid Margin="0,0,0,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="80"/>
+        </Grid.ColumnDefinitions>
         <Canvas Name="MainCanvas" Background="#FF86CB7B" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown" MouseLeftButtonUp="MainCanvas_MouseLeftButtonUp" MouseRightButtonDown="MainCanvas_MouseRightButtonDown" MouseRightButtonUp="MainCanvas_MouseRightButtonUp" MouseMove="MainCanvas_MouseMove">
             
         </Canvas>
+        <Image x:Name="CompressedImage" Grid.Row="1"></Image>
+        <StackPanel Grid.Column="1" Background="#FFF1F1F1" Grid.RowSpan="2">
+            <StackPanel.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="Height" Value="80"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Margin" Value="1"/>
+                </Style>
+            </StackPanel.Resources>
+            <Button x:Name="load" Click="Load_Click">Load</Button>
+            <Button x:Name="save" Click="Save_Click">Save</Button>
+            <Button x:Name="compress" Click="Compress_Click">Compress</Button>
+            <Button x:Name="discover" Click="Discover_Click">Discover</Button>
+        </StackPanel>
     </Grid>
 </Window>
