@@ -18,7 +18,7 @@
         <Canvas Name="MainCanvas" Background="#FF86CB7B" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown" MouseLeftButtonUp="MainCanvas_MouseLeftButtonUp" MouseRightButtonDown="MainCanvas_MouseRightButtonDown" MouseRightButtonUp="MainCanvas_MouseRightButtonUp" MouseMove="MainCanvas_MouseMove">
             
         </Canvas>
-        <Image x:Name="CompressedImage" Grid.Row="1"></Image>
+        <Image x:Name="CompressedImage" Grid.Row="1" MouseLeftButtonUp="CompressedImage_MouseLeftButtonUp"></Image>
         <StackPanel Grid.Column="1" Background="#FFF1F1F1" Grid.RowSpan="2">
             <StackPanel.Resources>
                 <Style TargetType="Button">

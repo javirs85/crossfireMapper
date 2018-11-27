@@ -8,7 +8,7 @@ using System.Xml.Serialization;
 
 namespace MapCreator
 {
-        public enum FixtureType {notSet, wood, field, orchard, house, bunker, fence, crest, rough, river, hill};
+    public enum FixtureType {notSet, wood, field, orchard, house, bunker, fence, crest, rough, river, hill};
 
     public class Fixture
     {
@@ -58,6 +58,8 @@ namespace MapCreator
     public class FixtureCollection
     {
         public List<Fixture> Fixtures = new List<Fixture>();
+        [XmlIgnore]
+        public BitmapImage compressedBMimage;
 
         public void Add(Fixture fix)
         {

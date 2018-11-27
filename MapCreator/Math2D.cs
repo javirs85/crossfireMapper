@@ -11,6 +11,31 @@ namespace MapCreator
     public static class Math2D
     {
 
+        public static bool IsPixelBlack(byte[] pixelsSource, int stride, Point index)
+        {
+            int sourceIdx = (int)index.Y * stride + 4 * (int)index.X;
+            if (pixelsSource[sourceIdx] != 0)
+                return false;
+            else
+                return true;
+        }
+
+        public static void SetPixelRed(byte[] pixelsSource, int stride, Point index)
+        {
+            int sourceIdx = (int)index.Y * stride + 4 * (int)index.X;
+            pixelsSource[sourceIdx + 0] = 255;      // red
+            pixelsSource[sourceIdx + 1] = 0;    // green
+            pixelsSource[sourceIdx + 2] = 0;    // blue
+            pixelsSource[sourceIdx + 3] = 255;  // alpha
+        }
+        public static void SetPixelBlue(byte[] pixelsSource, int stride, Point index)
+        {
+            int sourceIdx = (int)index.Y * stride + 4 * (int)index.X;
+            pixelsSource[sourceIdx + 0] = 0;      // red
+            pixelsSource[sourceIdx + 1] = 0;    // green
+            pixelsSource[sourceIdx + 2] = 255;    // blue
+            pixelsSource[sourceIdx + 3] = 255;  // alpha
+        }
 
         public static double AngleBetween(Vector vector1, Vector vector2)
         {

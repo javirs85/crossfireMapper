@@ -30,6 +30,8 @@ namespace MapCreator
         private Line rotateLine;
         private double oldAngle = 0;
 
+        private bool loadNeeded = false;
+
         private FixtureCollection Fixtures;
 
 
@@ -38,6 +40,12 @@ namespace MapCreator
             InitializeComponent();
             Fixtures = FixtureCollection.FromFile();
             
+            if (Fixtures == null)
+            {
+                loadNeeded = true;
+                discoverAll();
+            }
+
             rotateLine = new Line();
             rotateLine.StrokeThickness = 1;
             rotateLine.Stroke = Brushes.Red;
@@ -49,6 +57,10 @@ namespace MapCreator
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            if(loadNeeded)
+            {
+                return;
+            }
             var files = System.IO.Directory.GetFiles("BaseImages");
 
             foreach (var file in files)
@@ -74,6 +86,7 @@ namespace MapCreator
                 fix.img.RenderTransform = rotateTransform;
                 MainCanvas.Children.Add(fix.img);
             }
+            
         }
 
         private void MainCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -201,7 +214,14 @@ namespace MapCreator
 
         private void Discover_Click(object sender, RoutedEventArgs e)
         {
+            discoverAll();
+        }
+
+        private void discoverAll()
+        {
             var files = System.IO.Directory.GetFiles("BaseImages");
+            if (Fixtures == null)
+                Fixtures = new FixtureCollection();
 
             foreach (var file in files)
             {
@@ -222,7 +242,7 @@ namespace MapCreator
                 }
                 Canvas.SetLeft(fix.img, 0);
                 Canvas.SetTop(fix.img, 0);
-               // MainCanvas.Children.Add(fix.img);
+                // MainCanvas.Children.Add(fix.img);
             }
 
             Settings settings = new Settings();
@@ -236,21 +256,21 @@ namespace MapCreator
             rtb.Render(MainCanvas);
             var bitmapEncoder = new PngBitmapEncoder();
             bitmapEncoder.Frames.Add(BitmapFrame.Create(rtb));
-
-            var bitmapImage = new BitmapImage();
+            Fixtures.compressedBMimage = new BitmapImage();
+            
             using (var stream = new MemoryStream())
             {
                 bitmapEncoder.Save(stream);
                 stream.Seek(0, SeekOrigin.Begin);
 
-                bitmapImage.BeginInit();
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.StreamSource = stream;
-                bitmapImage.EndInit();
+                Fixtures.compressedBMimage.BeginInit();
+                Fixtures.compressedBMimage.CacheOption = BitmapCacheOption.OnLoad;
+                Fixtures.compressedBMimage.StreamSource = stream;
+                Fixtures.compressedBMimage.EndInit();
             }
 
             
-            WriteableBitmap final = new WriteableBitmap(bitmapImage);
+            WriteableBitmap final = new WriteableBitmap(Fixtures.compressedBMimage);
 
             
 
@@ -312,49 +332,37 @@ namespace MapCreator
             }
             final.WritePixels(new Int32Rect(0, 0, width, height), pixels, width * 4, 0);
 
+            Fixtures.compressedBMimage = final;
             CompressedImage.Source = final;
 
-            /*
-            int stride = bitmapImage.PixelWidth * 4;
-            int size = bitmapImage.PixelHeight * stride;
-            byte[] pixels = new byte[size];
-            bitmapImage.CopyPixels(pixels, stride, 0);
+        }
 
-            
+        private void CompressedImage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            WriteableBitmap final = new WriteableBitmap(Fixtures.compressedBMimage);
+            int width = (int)final.Width;
+            int height = (int)final.Height;
+            int stride = final.PixelWidth * 4;
+            int size = final.PixelHeight * stride;
+            byte[] pixelsSource = new byte[size];
+            final.CopyPixels(pixelsSource, stride, 0);
 
-            int h = final.PixelHeight;
-            int w = final.PixelWidth;
-            int[] pixelData = new int[w * h];
-            int widthInByte = 4 * w;
+            var clickedPoint = e.GetPosition(CompressedImage);
+            int i = (int)final.Width * (int)clickedPoint.Y + (int)clickedPoint.X;
 
-            final.CopyPixels(pixelData, widthInByte, 0);
-            
-            for (int y = 0; y < bitmapImage.PixelHeight; ++y)
+
+            if (Math2D.IsPixelBlack(pixelsSource, stride, clickedPoint))
             {
-                for (int x = 0; x < bitmapImage.PixelWidth; ++x)
-                {
-                    int index = y * stride + 4 * x;
-                    byte red = pixels[index];
-                    byte green = pixels[index + 1];
-                    byte blue = pixels[index + 2];
-                    byte alpha = pixels[index + 3];
-
-                    if (red < 255)
-                    {
-                        try
-                        {
-                            pixelData[index] = 0;
-                        }
-                        catch
-                        { }
-                    }
-                }
+                Math2D.SetPixelRed(pixelsSource, stride, clickedPoint);
             }
-            final.WritePixels(new Int32Rect(0, 0, w, h), pixelData, widthInByte, 0);
+            else
+            {
+                Math2D.SetPixelBlue(pixelsSource, stride, clickedPoint);
+            }
 
+
+            final.WritePixels(new Int32Rect(0, 0, width, height), pixelsSource, width * 4, 0);
             CompressedImage.Source = final;
-            */
-
         }
     }
 }
