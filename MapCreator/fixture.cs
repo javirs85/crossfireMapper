@@ -8,7 +8,8 @@ using System.Xml.Serialization;
 
 namespace MapCreator
 {
-    public enum FixtureType {notSet, wood, field, orchard, house, bunker, fence, crest, rough, river, hill};
+    public enum FixtureType {notSet, wood, field, orchard, house, bunker, fence, crest, rough, river, hill, fieldOutOfSeason };
+    public enum groundColor { open, fixture , nonLOSBlockingFixture};
 
     public class Fixture
     {
@@ -20,7 +21,10 @@ namespace MapCreator
         private BitmapImage bitmap;
         [XmlIgnore]
         public Image img;
-
+        [XmlIgnore]
+        public int ExpectedWidth { get { return (int)bitmap.Width; } }
+        [XmlIgnore]
+        public int ExpectedHeight { get { return (int)bitmap.Height; } }
 
         public void LoadImage(string path)
         {
@@ -59,7 +63,7 @@ namespace MapCreator
     {
         public List<Fixture> Fixtures = new List<Fixture>();
         [XmlIgnore]
-        public BitmapImage compressedBMimage;
+        public WriteableBitmap compressedBMimage;
 
         public void Add(Fixture fix)
         {

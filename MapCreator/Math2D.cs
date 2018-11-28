@@ -10,31 +10,64 @@ namespace MapCreator
 {
     public static class Math2D
     {
+        public static int stride;
 
-        public static bool IsPixelBlack(byte[] pixelsSource, int stride, Point index)
+        public static groundColor GetKindOfTerrain(byte[] pixelsSource,  Point index)
         {
-            int sourceIdx = (int)index.Y * stride + 4 * (int)index.X;
-            if (pixelsSource[sourceIdx] != 0)
+            try
+            {
+                int sourceIdx = (int)index.Y * stride + 4 * (int)index.X;
+                if (pixelsSource[sourceIdx] == 255 && pixelsSource[sourceIdx + 1] == 255 && pixelsSource[sourceIdx + 2] == 255)
+                    return groundColor.open;
+                else if(pixelsSource[sourceIdx] == 0 && pixelsSource[sourceIdx + 1] == 0 && pixelsSource[sourceIdx + 2] == 0)
+                    return groundColor.fixture;
+                else
+                    return groundColor.nonLOSBlockingFixture;                    
+            }catch
+            {
+                return groundColor.fixture;
+            }
+        }
+
+        public static bool IsPixelDifferntThanWhie(byte[] pixelsSource, Point index)
+        {
+            try
+            {
+                int sourceIdx = (int)index.Y * stride + 4 * (int)index.X;
+                if (pixelsSource[sourceIdx] == 255 && pixelsSource[sourceIdx + 1] == 255 && pixelsSource[sourceIdx + 2] == 255)
+                    return false;
+                else
+                    return true;
+            }
+            catch
+            {
                 return false;
-            else
-                return true;
+            }
         }
 
-        public static void SetPixelRed(byte[] pixelsSource, int stride, Point index)
+        public static void SetPixelRGB(byte[] pixelsSource, Point index, byte r, byte g, byte b, byte alpha = 255)
         {
             int sourceIdx = (int)index.Y * stride + 4 * (int)index.X;
-            pixelsSource[sourceIdx + 0] = 255;      // red
-            pixelsSource[sourceIdx + 1] = 0;    // green
-            pixelsSource[sourceIdx + 2] = 0;    // blue
-            pixelsSource[sourceIdx + 3] = 255;  // alpha
+            if (sourceIdx < pixelsSource.Length - 3)
+            {
+                pixelsSource[sourceIdx + 0] = b;    // blue
+                pixelsSource[sourceIdx + 1] = g;    // green
+                pixelsSource[sourceIdx + 2] = r;  // red
+                pixelsSource[sourceIdx + 3] = alpha;  // alpha
+            }
         }
-        public static void SetPixelBlue(byte[] pixelsSource, int stride, Point index)
+
+        public static void SetPixelRed(byte[] pixelsSource,  Point index)
         {
-            int sourceIdx = (int)index.Y * stride + 4 * (int)index.X;
-            pixelsSource[sourceIdx + 0] = 0;      // red
-            pixelsSource[sourceIdx + 1] = 0;    // green
-            pixelsSource[sourceIdx + 2] = 255;    // blue
-            pixelsSource[sourceIdx + 3] = 255;  // alpha
+            SetPixelRGB(pixelsSource,  index, 255, 0, 0);
+        }
+        public static void SetPixeDarkRed(byte[] pixelsSource, Point index)
+        {
+            SetPixelRGB(pixelsSource, index, 100, 0, 0);
+        }
+        public static void SetPixelGreen(byte[] pixelsSource, Point index)
+        {
+            SetPixelRGB(pixelsSource,  index, 0, 255, 0);
         }
 
         public static double AngleBetween(Vector vector1, Vector vector2)
@@ -44,6 +77,9 @@ namespace MapCreator
 
             return Math.Atan2(sin, cos) * (180 / Math.PI);
         }
+
+
+        public static List<Point> line(Point start, Point end) => line((int)start.X, (int)start.Y, (int)end.X, (int)end.Y);
 
         public static List<Point> line(int x, int y, int x2, int y2)
         {
@@ -84,6 +120,25 @@ namespace MapCreator
             }
 
             return result;
+        }
+        
+
+        internal static void DrawSquareRGB(byte[] pixelsSourceToWrite, Point clickedPoint, byte r, byte g, byte b)
+        {
+            var x = clickedPoint.X;
+            var y = clickedPoint.Y;
+
+            SetPixelRGB(pixelsSourceToWrite,  new Point(x - 1, y - 1), r, g, b);
+            SetPixelRGB(pixelsSourceToWrite,  new Point(x + 0, y - 1), r, g, b);
+            SetPixelRGB(pixelsSourceToWrite,  new Point(x + 1, y - 1), r, g, b);
+
+            SetPixelRGB(pixelsSourceToWrite,  new Point(x - 1, y), r, g, b);
+            SetPixelRGB(pixelsSourceToWrite,  new Point(x + 0, y), r, g, b);
+            SetPixelRGB(pixelsSourceToWrite,  new Point(x + 1, y), r, g, b);
+
+            SetPixelRGB(pixelsSourceToWrite,  new Point(x - 1, y + 1), r, g, b);
+            SetPixelRGB(pixelsSourceToWrite,  new Point(x + 0, y + 1), r, g, b);
+            SetPixelRGB(pixelsSourceToWrite,  new Point(x + 1, y + 1), r, g, b);
         }
     }
 }

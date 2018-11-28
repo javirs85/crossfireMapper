@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:MapCreator"
-        mc:Ignorable="d" Name="Bigwindow"
+        mc:Ignorable="d" Name="Bigwindow" Background="#FFE3E4CF"
         Title="MainWindow" Height="900" Width="800" Loaded="Window_Loaded">
     <Grid Margin="0,0,0,0">
         <Grid.RowDefinitions>
@@ -15,10 +15,10 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="80"/>
         </Grid.ColumnDefinitions>
-        <Canvas Name="MainCanvas" Background="#FF86CB7B" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown" MouseLeftButtonUp="MainCanvas_MouseLeftButtonUp" MouseRightButtonDown="MainCanvas_MouseRightButtonDown" MouseRightButtonUp="MainCanvas_MouseRightButtonUp" MouseMove="MainCanvas_MouseMove">
+        <Canvas Name="MainCanvas" Background="#FF86CB7B" HorizontalAlignment="Left" MouseLeftButtonDown="MainCanvas_MouseLeftButtonDown" MouseLeftButtonUp="MainCanvas_MouseLeftButtonUp" MouseRightButtonDown="MainCanvas_MouseRightButtonDown" MouseRightButtonUp="MainCanvas_MouseRightButtonUp" MouseMove="MainCanvas_MouseMove">
             
         </Canvas>
-        <Image x:Name="CompressedImage" Grid.Row="1" MouseLeftButtonUp="CompressedImage_MouseLeftButtonUp"></Image>
+        <Image x:Name="CompressedImage" Grid.Row="1" HorizontalAlignment="Left" MouseLeftButtonUp="CompressedImage_MouseLeftButtonUp"></Image>
         <StackPanel Grid.Column="1" Background="#FFF1F1F1" Grid.RowSpan="2">
             <StackPanel.Resources>
                 <Style TargetType="Button">

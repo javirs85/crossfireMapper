@@ -34,12 +34,11 @@ namespace MapCreator
 
         private FixtureCollection Fixtures;
 
-
         public MainWindow()
         {
             InitializeComponent();
             Fixtures = FixtureCollection.FromFile();
-            
+
             if (Fixtures == null)
             {
                 loadNeeded = true;
@@ -57,7 +56,7 @@ namespace MapCreator
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            if(loadNeeded)
+            if (loadNeeded)
             {
                 return;
             }
@@ -72,8 +71,10 @@ namespace MapCreator
                 {
                     baseImage = fix.img;
                     Panel.SetZIndex(fix.img, 0);
-                    Bigwindow.Height = fix.img.Height * 2;
-                    Bigwindow.ResizeMode = ResizeMode.NoResize;
+                    Bigwindow.Height = fix.ExpectedHeight * 2;
+                    MainCanvas.Width = fix.ExpectedWidth;
+                    MainCanvas.Height = fix.ExpectedHeight;
+                    //Bigwindow.ResizeMode = ResizeMode.NoResize;
                 }
                 else
                 {
@@ -86,7 +87,7 @@ namespace MapCreator
                 fix.img.RenderTransform = rotateTransform;
                 MainCanvas.Children.Add(fix.img);
             }
-            
+
         }
 
         private void MainCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -147,7 +148,7 @@ namespace MapCreator
         {
             currentAction = Actions.rotating;
 
-            if(SelectedImage == null)
+            if (SelectedImage == null)
             {
                 var image = e.Source as Image;
                 if (image == baseImage)
@@ -197,7 +198,7 @@ namespace MapCreator
                 {
                     baseImage = fix.img;
                     Panel.SetZIndex(fix.img, 0);
-                    Bigwindow.Height = fix.img.Height * 2;
+                    Bigwindow.Height = fix.img.Height * 2 + 30;
                     Bigwindow.ResizeMode = ResizeMode.NoResize;
                 }
                 else
@@ -232,8 +233,10 @@ namespace MapCreator
                 {
                     baseImage = fix.img;
                     Panel.SetZIndex(fix.img, 0);
-                    Bigwindow.Height = fix.img.Height * 2;
-                    Bigwindow.ResizeMode = ResizeMode.NoResize;
+                    MainCanvas.Width = fix.img.Width;
+                    MainCanvas.Height = fix.img.Height;
+                    Bigwindow.Height = fix.img.Height * 2 + 30;
+                    //Bigwindow.ResizeMode = ResizeMode.NoResize;
                 }
                 else
                 {
@@ -250,32 +253,122 @@ namespace MapCreator
             settings.Show();
         }
 
-        private void Compress_Click(object sender, RoutedEventArgs e)
+        private void CompresImageToColor(byte r, byte g, byte b, bool BackGroundWhite = false)
         {
             RenderTargetBitmap rtb = new RenderTargetBitmap((int)MainCanvas.RenderSize.Width, (int)MainCanvas.RenderSize.Height, 96d, 96d, System.Windows.Media.PixelFormats.Default);
             rtb.Render(MainCanvas);
             var bitmapEncoder = new PngBitmapEncoder();
             bitmapEncoder.Frames.Add(BitmapFrame.Create(rtb));
-            Fixtures.compressedBMimage = new BitmapImage();
-            
+            var temporalBitmap = new BitmapImage();
+
             using (var stream = new MemoryStream())
             {
                 bitmapEncoder.Save(stream);
                 stream.Seek(0, SeekOrigin.Begin);
 
-                Fixtures.compressedBMimage.BeginInit();
-                Fixtures.compressedBMimage.CacheOption = BitmapCacheOption.OnLoad;
-                Fixtures.compressedBMimage.StreamSource = stream;
-                Fixtures.compressedBMimage.EndInit();
+                temporalBitmap.BeginInit();
+                temporalBitmap.CacheOption = BitmapCacheOption.OnLoad;
+                temporalBitmap.StreamSource = stream;
+                temporalBitmap.EndInit();
             }
 
-            
-            WriteableBitmap final = new WriteableBitmap(Fixtures.compressedBMimage);
+            WriteableBitmap temporalSource;
 
-            
+            if (Fixtures.compressedBMimage == null)
+            {
+                Fixtures.compressedBMimage = new WriteableBitmap(temporalBitmap);
+                temporalSource = Fixtures.compressedBMimage;
+            }
+            else
+                temporalSource = new WriteableBitmap(temporalBitmap);
 
-            int width = (int)final.Width;
-            int height = (int)final.Height;
+            int width = (int)temporalSource.Width;
+            int height = (int)temporalSource.Height;
+            Math2D.stride = temporalSource.PixelWidth * 4;
+            int size = temporalSource.PixelHeight * Math2D.stride;
+
+            byte[] pixelsSource = new byte[size];
+            temporalSource.CopyPixels(pixelsSource, Math2D.stride, 0);
+            byte[] pixelsToWrite = new byte[size];
+            if (Fixtures.compressedBMimage != null)
+                Fixtures.compressedBMimage.CopyPixels(pixelsToWrite, Math2D.stride, 0);
+
+            for(int y = 0; y<height; y++)
+                for(int x = 0; x<width;++x)
+                {
+                    if (Math2D.IsPixelDifferntThanWhie(pixelsSource, new Point(x, y)))
+                        Math2D.SetPixelRGB(pixelsToWrite, new Point(x, y), r, g, b);
+                    else
+                    {
+                        if (BackGroundWhite)
+                            Math2D.SetPixelRGB(pixelsToWrite, new Point(x, y), 255, 255, 255);
+                    }
+                }
+
+            Fixtures.compressedBMimage.WritePixels(new Int32Rect(0, 0, width, height), pixelsToWrite, width * 4, 0);
+            CompressedImage.Source = Fixtures.compressedBMimage;
+
+
+        }
+
+        private void Compress_Click(object sender, RoutedEventArgs e)
+        { 
+            foreach (var fix in Fixtures.Fixtures)
+                if (fix.type == FixtureType.river || fix.type == FixtureType.rough || fix.type == FixtureType.fence || fix.type == FixtureType.fieldOutOfSeason)
+                    MainCanvas.Children.Remove(fix.img);
+
+            CompresImageToColor(0, 0, 0, true);
+            
+            MainCanvas.Children.Clear();
+
+            var baseimg = Fixtures.Fixtures.Find(x => x.IsTable == true);
+            MainCanvas.Children.Add(baseimg.img);
+            foreach (var fix in Fixtures.Fixtures)
+                if (fix.type == FixtureType.river)
+                    MainCanvas.Children.Add(fix.img);
+            
+            CompresImageToColor(0, 153, 255);
+
+
+            MainCanvas.Children.Clear();
+            baseimg = Fixtures.Fixtures.Find(x => x.IsTable == true);
+            MainCanvas.Children.Add(baseimg.img);
+            foreach (var fix in Fixtures.Fixtures)
+                if (fix.type == FixtureType.rough)
+                    MainCanvas.Children.Add(fix.img);
+
+            CompresImageToColor(255, 204, 153);
+
+
+            MainCanvas.Children.Clear();
+            baseimg = Fixtures.Fixtures.Find(x => x.IsTable == true);
+            MainCanvas.Children.Add(baseimg.img);
+            foreach (var fix in Fixtures.Fixtures)
+                if (fix.type == FixtureType.fence)
+                    MainCanvas.Children.Add(fix.img);
+
+            CompresImageToColor(150, 73, 48);
+
+            MainCanvas.Children.Clear();
+            baseimg = Fixtures.Fixtures.Find(x => x.IsTable == true);
+            MainCanvas.Children.Add(baseimg.img);
+            foreach (var fix in Fixtures.Fixtures)
+                if (fix.type == FixtureType.fieldOutOfSeason)
+                    MainCanvas.Children.Add(fix.img);
+
+            CompresImageToColor(255, 204, 102);
+
+
+            MainCanvas.Children.Clear();
+
+            Fixtures.Fixtures.ForEach(x => MainCanvas.Children.Add(x.img));
+
+            /*
+
+            var final = Fixtures.compressedBMimage;
+
+
+           
             int red;
             int green;
             int blue;
@@ -284,10 +377,9 @@ namespace MapCreator
             byte sourceGreen;
             byte sourceBlue;
             byte sourceAlpha;
-            uint[] pixels = new uint[width * height];
-            byte[] pixelData = new byte[4];
+            
 
-            int stride = final.PixelWidth * 4;
+            
             int size = final.PixelHeight * stride;
             byte[] pixelsSource = new byte[size];
             final.CopyPixels(pixelsSource, stride, 0);
@@ -334,7 +426,7 @@ namespace MapCreator
 
             Fixtures.compressedBMimage = final;
             CompressedImage.Source = final;
-
+            */
         }
 
         private void CompressedImage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
@@ -344,25 +436,66 @@ namespace MapCreator
             int height = (int)final.Height;
             int stride = final.PixelWidth * 4;
             int size = final.PixelHeight * stride;
-            byte[] pixelsSource = new byte[size];
-            final.CopyPixels(pixelsSource, stride, 0);
+            byte[] pixelsSourceToRead = new byte[size];
+            final.CopyPixels(pixelsSourceToRead, stride, 0);
+
+            byte[] pixelsSourceToWrite = new byte[size];
+            final.CopyPixels(pixelsSourceToWrite, stride, 0);
 
             var clickedPoint = e.GetPosition(CompressedImage);
-            int i = (int)final.Width * (int)clickedPoint.Y + (int)clickedPoint.X;
 
+            List<int> lenghts = new List<int>();
+            for(int i =0; i<final.PixelWidth; ++i)
+                lenghts.Add(DrawVisibleLine(clickedPoint, new Point(i,0), pixelsSourceToRead, pixelsSourceToWrite, stride));
+            for (int i = 0; i < final.PixelHeight; ++i)
+                lenghts.Add(DrawVisibleLine(clickedPoint, new Point(final.PixelHeight, i), pixelsSourceToRead, pixelsSourceToWrite, stride));
+            for (int i = 0; i < final.PixelHeight; ++i)
+                lenghts.Add(DrawVisibleLine(clickedPoint, new Point(0, i), pixelsSourceToRead, pixelsSourceToWrite, stride));
+            for (int i = 0; i < final.PixelWidth; ++i)
+                lenghts.Add(DrawVisibleLine(clickedPoint, new Point(i, final.PixelHeight), pixelsSourceToRead, pixelsSourceToWrite, stride));
 
-            if (Math2D.IsPixelBlack(pixelsSource, stride, clickedPoint))
-            {
-                Math2D.SetPixelRed(pixelsSource, stride, clickedPoint);
-            }
-            else
-            {
-                Math2D.SetPixelBlue(pixelsSource, stride, clickedPoint);
-            }
+            Math2D.DrawSquareRGB(pixelsSourceToWrite, clickedPoint, 0, 255, 100);
 
-
-            final.WritePixels(new Int32Rect(0, 0, width, height), pixelsSource, width * 4, 0);
+            final.WritePixels(new Int32Rect(0, 0, width, height), pixelsSourceToWrite, width * 4, 0);
             CompressedImage.Source = final;
+
+            MessageBox.Show(lenghts.Max().ToString());
+        }
+
+        private int DrawVisibleLine(Point start, Point end, byte[] pixelsSource, byte[] pixelsSourceToWrite, int stride)
+        {
+            var points = Math2D.line(start, end);
+
+            int pixel = 0;
+
+            //if we start in a fixture we can see all the fixture, move on till we get out of it.
+            while (pixel < points.Count && Math2D.GetKindOfTerrain(pixelsSource, points[pixel]) == groundColor.fixture)
+            {
+                Math2D.SetPixeDarkRed(pixelsSourceToWrite, points[pixel]);
+                pixel++;
+            }
+            
+            //now we are for sure in the open. Keep on till the next fixture
+            while (pixel < points.Count && Math2D.GetKindOfTerrain(pixelsSource, points[pixel]) != groundColor.fixture)
+            {
+                var obj = Math2D.GetKindOfTerrain(pixelsSource, points[pixel]);
+
+                if (obj == groundColor.open)
+                    Math2D.SetPixelRed(pixelsSourceToWrite, points[pixel]);
+                else
+                    Math2D.SetPixelRGB(pixelsSourceToWrite, points[pixel], 220, 160, 100);
+
+                pixel++;
+            }
+
+            //we are in the last fixture we will see. Keep on untill we reach it's limit
+            while (pixel < points.Count && Math2D.GetKindOfTerrain(pixelsSource, points[pixel]) == groundColor.fixture)
+            {
+                Math2D.SetPixeDarkRed(pixelsSourceToWrite, points[pixel]);
+                pixel++;
+            }
+            
+            return pixel;
         }
     }
 }
